@@ -1,0 +1,10 @@
+{
+    "mysql": {
+      "User": "youruser",
+      "Password": "yourpassword",
+      "Host": "localhost",
+      "Port": 5432,
+      "Database": "yourdb"
+  },
+  "token_secret_key":"2cd96a1b-94bb-46b7-8909-09749c5e4499"
+}
