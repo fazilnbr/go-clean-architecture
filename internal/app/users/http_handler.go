@@ -1,6 +1,7 @@
 package users
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -8,22 +9,20 @@ import (
 )
 
 type HttpHandler struct {
-	service    Service
-	middleware MiddlewareIf
+	service Service
 }
 
-func NewHttpHandler(service Service, middleware MiddlewareIf) HttpHandler {
+func NewHttpHandler(service Service) HttpHandler {
 	return HttpHandler{
-		service:    service,
-		middleware: middleware,
+		service: service,
 	}
 }
 
-func (h HttpHandler) InitRoutes(router *gin.RouterGroup) {
+func (h HttpHandler) InitRoutes(router *gin.RouterGroup, middleware MiddlewareIf) {
 	router.POST("/signup", h.SignUp)
-	router.POST("/login", h.Login)
-	router.Use(h.middleware.ValidateToken()).PUT("/", h.Update)
-	router.Use(h.middleware.ValidateToken()).DELETE("/", h.Delete)
+	router.Use(middleware.CreateToken()).POST("/login", h.Login)
+	router.Use(middleware.ValidateToken()).PUT("/", h.Update)
+	router.Use(middleware.ValidateToken()).DELETE("/", h.Delete)
 }
 
 func (h HttpHandler) SignUp(c *gin.Context) {
@@ -53,12 +52,7 @@ func (h HttpHandler) Login(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "user login failed with " + err.Error()})
 		return
 	}
-	token, err := h.middleware.CreateToken(user.ID)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "create token failed with " + err.Error()})
-		return
-	}
-	c.JSON(http.StatusOK, gin.H{"message": "user login successfully", "token": token})
+	c.Set(USER_ID, fmt.Sprintf("%d", uint(user.ID)))
 }
 
 func (h HttpHandler) Update(c *gin.Context) {

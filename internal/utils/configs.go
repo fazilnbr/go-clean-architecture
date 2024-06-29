@@ -6,9 +6,9 @@ type AppConfig struct {
 }
 
 type Postgres struct {
-	User     string
-	Password string
-	Host     string
-	Port     int
-	Database string
+	User     string `json:"user"`
+	Password string `json:"password"`
+	Host     string `json:"host"`
+	Port     int    `json:"port"`
+	Database string `json:"database"`
 }

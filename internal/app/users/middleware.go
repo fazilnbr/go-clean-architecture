@@ -12,7 +12,7 @@ import (
 const USER_ID = "user_id"
 
 type MiddlewareIf interface {
-	CreateToken(id uint) (string, error)
+	CreateToken() gin.HandlerFunc
 	ValidateToken() gin.HandlerFunc
 }
 
@@ -24,18 +24,31 @@ func NewMiddleware(secretKey string) MiddlewareIf {
 	return &Middleware{secretKey: secretKey}
 }
 
-func (m *Middleware) CreateToken(id uint) (string, error) {
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		USER_ID: id,
-		"exp":   time.Now().Add(time.Hour * 72).Unix(),
-	})
+func (m *Middleware) CreateToken() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Next()
 
-	tokenString, err := token.SignedString([]byte(m.secretKey))
-	if err != nil {
-		return "", err
+		id, err := c.Cookie(USER_ID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "create token failed with " + err.Error()})
+			c.Abort()
+			return
+		}
+
+		token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+			USER_ID: id,
+			"exp":   time.Now().Add(time.Hour * 72).Unix(),
+		})
+
+		tokenString, err := token.SignedString([]byte(m.secretKey))
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "create token failed with " + err.Error()})
+			c.Abort()
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"message": "user login successfully", "token": tokenString})
+
 	}
-
-	return tokenString, nil
 }
 
 func (m *Middleware) ValidateToken() gin.HandlerFunc {
