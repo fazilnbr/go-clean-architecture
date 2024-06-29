@@ -92,13 +92,13 @@ func (s *Server) InitServices() error {
 	usersDao := users.NewDAO(s.resources.postgresDB)
 	middleware := users.NewMiddleware(s.resources.tokenSecretKey)
 	usersSvc := users.NewService(usersDao)
-	usersHandler := users.NewHttpHandler(usersSvc, middleware)
+	usersHandler := users.NewHttpHandler(usersSvc)
 
 	apiGroup := s.router.Group("/api")
 	{
 		userGroup := apiGroup.Group("/users")
 		{
-			usersHandler.InitRoutes(userGroup)
+			usersHandler.InitRoutes(userGroup, middleware)
 		}
 	}
 
